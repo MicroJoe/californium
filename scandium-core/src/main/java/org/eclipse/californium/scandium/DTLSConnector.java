@@ -134,6 +134,12 @@ public class DTLSConnector implements Connector {
 			+ 12 // DTLS message headers
 			+ 13 // DTLS record headers
 			+ MAX_CIPHERTEXT_EXPANSION;
+	/**
+	 * The default size of the striped executor's thread pool which is used for processing records.
+	 * <p>
+	 * The value of this property is 6 * <em>#(CPU cores)</em>.
+	 */
+	private static final int DEFAULT_EXECUTOR_THREAD_POOL_SIZE = 6 * Runtime.getRuntime().availableProcessors();
 
 	/** all the configuration options for the DTLS connector */ 
 	private final DtlsConnectorConfig config;
@@ -240,12 +246,11 @@ public class DTLSConnector implements Connector {
 	 * Sets the executor to use for processing records.
 	 * <p>
 	 * If this property is not set before invoking the {@linkplain #start() start method},
-	 * a new {@link StripedExecutorService} is used with a thread pool of size #(CPU cores).
-	 * <p>
-	 * In a production environment the thread pool used by the executor should be much larger
-	 * than just the number of CPU cores. This helps with performing multiple handshakes
-	 * in parallel, in particular if the key exchange requires look up of identities, e.g.
-	 * in a database or using a web service.
+	 * a new {@link StripedExecutorService} is created with a thread pool of
+	 * {@linkplain #DEFAULT_EXECUTOR_THREAD_POOL_SIZE default size}.
+	 * 
+	 * This helps with performing multiple handshakes in parallel, in particular if the key exchange
+	 * requires a look up of identities, e.g. in a database or using a web service.
 	 * <p>
 	 * If this method is used to set an executor, the executor will <em>not</em> be shut down
 	 * by the {@linkplain #stop() stop method}.
@@ -309,8 +314,8 @@ public class DTLSConnector implements Connector {
 				new DaemonThreadFactory("DTLS RetransmitTask-", NamedThreadFactory.SCANDIUM_THREAD_GROUP));
 
 		if (executor == null) {
-			// use a thread pool with max 6 * #CPU cores
-			executor = new StripedExecutorService(Runtime.getRuntime().availableProcessors() * 6);
+			// use a decently sized thread pool
+			executor = new StripedExecutorService(DEFAULT_EXECUTOR_THREAD_POOL_SIZE);
 			this.hasInternalExecutor = true;
 		}
 		socket = new DatagramSocket(null);
