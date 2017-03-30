@@ -256,10 +256,15 @@ public class DTLSConnector implements Connector {
 	 * by the {@linkplain #stop() stop method}.
 	 * 
 	 * @param executor The executor.
+	 * @throws IllegalStateException if his connector is already running.
 	 */
-	public void setExecutor(StripedExecutorService executor) {
+	public final synchronized void setExecutor(StripedExecutorService executor) {
 
-		this.executor = executor;
+		if (running.get()) {
+			throw new IllegalStateException("cannot set executor while connector is running");
+		} else {
+			this.executor = executor;
+		}
 	}
 
 	/**
