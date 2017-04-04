@@ -106,6 +106,13 @@ public final class UdpMatcher extends BaseMatcher {
 	@Override
 	public void sendResponse(final Exchange exchange, final Response response) {
 
+		if (LOGGER.isLoggable(Level.FINER)) {
+			LOGGER.log(
+					Level.FINER,
+					"Response [MID: {0}, Token: {1}]",
+					new Object[] { exchange.getCurrentRequest().getMID(), exchange.getCurrentRequest().getTokenString() });
+		}
+
 		// ensure Token is set
 		response.setToken(exchange.getCurrentRequest().getToken());
 
@@ -174,6 +181,7 @@ public final class UdpMatcher extends BaseMatcher {
 		Exchange exchange = new Exchange(request, Origin.REMOTE);
 		Exchange previous = exchangeStore.findPrevious(idByMID, exchange);
 		if (previous == null) {
+			LOGGER.log(Level.FINER, "Receive request: {0}", request);
 			exchange.setObserver(exchangeObserver);
 			return exchange;
 
