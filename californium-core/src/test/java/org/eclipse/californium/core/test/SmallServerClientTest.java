@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.logging.Logger;
 
 import org.eclipse.californium.category.LongTerm;
 import org.eclipse.californium.core.CoapServer;
@@ -53,6 +54,8 @@ import org.junit.runner.RunWith;
 @RunWith(LongTermRunner.class)
 @Category(LongTerm.class)
 public class SmallServerClientTest {
+	public static final Logger LOGGER = Logger.getLogger(SmallServerClientTest.class.getName());
+	
 	@ClassRule
 	public static CoapNetworkRule network = new CoapNetworkRule(CoapNetworkRule.Mode.DIRECT, CoapNetworkRule.Mode.NATIVE);
 
@@ -62,12 +65,14 @@ public class SmallServerClientTest {
 
 	@Before
 	public void initLogger() {
+		LOGGER.info("Start");
 		System.out.println(System.lineSeparator() + "Start " + getClass().getSimpleName());
 		EndpointManager.clear();
 	}
 
 	@After
 	public void after() {
+		LOGGER.info("End");
 		System.out.println("End " + getClass().getSimpleName());
 	}
 
@@ -82,6 +87,7 @@ public class SmallServerClientTest {
 		request.setDestinationPort(serverPort);
 		request.setPayload("client says hi");
 		request.send();
+		LOGGER.info("client sent request");
 		System.out.println("client sent request");
 
 		// receive response and check
