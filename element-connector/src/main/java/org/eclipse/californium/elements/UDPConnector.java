@@ -279,6 +279,9 @@ public class UDPConnector implements Connector {
 
 		protected void work() throws IOException {
 			datagram.setLength(size);
+			if (LOGGER.isLoggable(Level.FINER)) {
+				LOGGER.log(Level.FINER, "UDPConnector ({0}) start receive", socket.getLocalSocketAddress());
+			}
 			socket.receive(datagram);
 			if (LOGGER.isLoggable(Level.FINER)) {
 				LOGGER.log(Level.FINER, "UDPConnector ({0}) received {1} bytes from {2}:{3}",
