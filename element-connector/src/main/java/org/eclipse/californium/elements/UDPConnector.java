@@ -64,7 +64,6 @@ public class UDPConnector implements Connector {
 
 	private final InetSocketAddress localAddr;
 
-
 	private List<Thread> receiverThreads;
 	private List<Thread> senderThreads;
 
@@ -91,8 +90,8 @@ public class UDPConnector implements Connector {
 	private int receiverPacketSize = 2048;
 
 	/**
-	 * Creates a connector on the wildcard address listening on an
-	 * ephemeral port, i.e. a port chosen by the system.
+	 * Creates a connector on the wildcard address listening on an ephemeral
+	 * port, i.e. a port chosen by the system.
 	 * 
 	 * The effect of this constructor is the same as invoking
 	 * <code>UDPConnector(null)</code>.
@@ -103,9 +102,10 @@ public class UDPConnector implements Connector {
 
 	/**
 	 * Creates a connector bound to a given IP address and port.
-	 *  
-	 * @param address the IP address and port, if <code>null</code>
-	 * the connector is bound to an ephemeral port on the wildcard address
+	 * 
+	 * @param address the IP address and port, if <code>null</code> the
+	 *            connector is bound to an ephemeral port on the wildcard
+	 *            address
 	 */
 	public UDPConnector(InetSocketAddress address) {
 		if (address == null) {
@@ -115,7 +115,7 @@ public class UDPConnector implements Connector {
 		}
 		this.running = false;
 
-		//TODO: think about restricting the outbound queue's capacity
+		// TODO: think about restricting the outbound queue's capacity
 		this.outgoing = new LinkedBlockingQueue<RawData>();
 	}
 
@@ -143,22 +143,22 @@ public class UDPConnector implements Connector {
 
 		// start receiver and sender threads
 		LOGGER.log(Level.CONFIG, "UDPConnector starts up {0} sender threads and {1} receiver threads",
-				new Object[]{senderCount, receiverCount});
+				new Object[] { senderCount, receiverCount });
 
 		receiverThreads = new LinkedList<Thread>();
-		for (int i=0;i<receiverCount;i++) {
-			receiverThreads.add(new Receiver("UDP-Receiver-"+localAddr+"["+i+"]"));
+		for (int i = 0; i < receiverCount; i++) {
+			receiverThreads.add(new Receiver("UDP-Receiver-" + localAddr + "[" + i + "]"));
 		}
 
 		senderThreads = new LinkedList<Thread>();
-		for (int i=0;i<senderCount;i++) {
-			senderThreads.add(new Sender("UDP-Sender-"+localAddr+"["+i+"]"));
+		for (int i = 0; i < senderCount; i++) {
+			senderThreads.add(new Sender("UDP-Sender-" + localAddr + "[" + i + "]"));
 		}
 
-		for (Thread t:receiverThreads) {
+		for (Thread t : receiverThreads) {
 			t.start();
 		}
-		for (Thread t:senderThreads) {
+		for (Thread t : senderThreads) {
 			t.start();
 		}
 
@@ -168,25 +168,25 @@ public class UDPConnector implements Connector {
 		 * called up there, it seems to work. This issue occurred in Java
 		 * 1.7.0_09, Windows 7.
 		 */
-		
-		String startupMsg = new StringBuffer("UDPConnector listening on ")
-			.append(socket.getLocalSocketAddress()).append(", recv buf = ")
-			.append(receiveBufferSize).append(", send buf = ").append(sendBufferSize)
-			.append(", recv packet size = ").append(receiverPacketSize).toString();
+
+		String startupMsg = new StringBuffer("UDPConnector listening on ").append(socket.getLocalSocketAddress())
+				.append(", recv buf = ").append(receiveBufferSize).append(", send buf = ").append(sendBufferSize)
+				.append(", recv packet size = ").append(receiverPacketSize).toString();
 		LOGGER.log(Level.CONFIG, startupMsg);
 	}
 
 	@Override
 	public synchronized void stop() {
-		if (!running) return;
+		if (!running)
+			return;
 		this.running = false;
 		// stop all threads
-		if (senderThreads!= null)
-			for (Thread t:senderThreads) {
+		if (senderThreads != null)
+			for (Thread t : senderThreads) {
 				t.interrupt();
 			}
-		if (receiverThreads!= null)
-			for (Thread t:receiverThreads) {
+		if (receiverThreads != null)
+			for (Thread t : receiverThreads) {
 				t.interrupt();
 			}
 		outgoing.clear();
@@ -208,6 +208,10 @@ public class UDPConnector implements Connector {
 		if (msg == null) {
 			throw new NullPointerException("Message must not be null");
 		} else {
+			if (LOGGER.isLoggable(Level.FINER)) {
+				LOGGER.log(Level.FINER, "UDPConnector ({0}) schedule sends {1} bytes to {2}:{3}",
+						new Object[] { getUri(), msg.getSize(), msg.getAddress(), msg.getPort() });
+			}
 			outgoing.add(msg);
 		}
 	}
@@ -227,8 +231,10 @@ public class UDPConnector implements Connector {
 	}
 
 	public InetSocketAddress getAddress() {
-		if (socket == null) return localAddr;
-		else return new InetSocketAddress(socket.getLocalAddress(), socket.getLocalPort());
+		if (socket == null)
+			return localAddr;
+		else
+			return new InetSocketAddress(socket.getLocalAddress(), socket.getLocalPort());
 	}
 
 	private abstract class NetworkStageThread extends Thread {
@@ -263,34 +269,34 @@ public class UDPConnector implements Connector {
 		 */
 		protected abstract void work() throws Exception;
 	}
-	
+
 	private class Receiver extends NetworkStageThread {
-		
+
 		private DatagramPacket datagram;
 		private int size;
-		
+
 		private Receiver(String name) {
 			super(name);
 			this.size = receiverPacketSize;
 			this.datagram = new DatagramPacket(new byte[size], size);
 		}
-		
+
 		protected void work() throws IOException {
 			datagram.setLength(size);
 			socket.receive(datagram);
 			if (LOGGER.isLoggable(Level.FINER)) {
 				LOGGER.log(Level.FINER, "UDPConnector ({0}) received {1} bytes from {2}:{3}",
-						new Object[]{socket.getLocalSocketAddress(), datagram.getLength(),
-							datagram.getAddress(), datagram.getPort()});
+						new Object[] { socket.getLocalSocketAddress(), datagram.getLength(), datagram.getAddress(),
+								datagram.getPort() });
 			}
 			byte[] bytes = Arrays.copyOfRange(datagram.getData(), datagram.getOffset(), datagram.getLength());
 			RawData msg = new RawData(bytes, datagram.getAddress(), datagram.getPort());
 
 			receiver.receiveData(msg);
 		}
-		
+
 	}
-	
+
 	private class Sender extends NetworkStageThread {
 
 		private DatagramPacket datagram;
@@ -302,7 +308,10 @@ public class UDPConnector implements Connector {
 
 		protected void work() throws InterruptedException, IOException {
 			RawData raw = outgoing.take(); // Blocking
-			/* check, if message should be sent with the "none correlation context" of UDP connector */
+			/*
+			 * check, if message should be sent with the
+			 * "none correlation context" of UDP connector
+			 */
 			CorrelationContextMatcher correlationMatcher = getCorrelationContextMatcher();
 			if (null != correlationMatcher && !correlationMatcher.isToBeSent(raw.getCorrelationContext(), null)) {
 				if (LOGGER.isLoggable(Level.WARNING)) {
@@ -317,8 +326,7 @@ public class UDPConnector implements Connector {
 			datagram.setPort(raw.getPort());
 			if (LOGGER.isLoggable(Level.FINER)) {
 				LOGGER.log(Level.FINER, "UDPConnector ({0}) sends {1} bytes to {2}:{3}",
-						new Object[] { getUri(), datagram.getLength(), datagram.getAddress(),
-								datagram.getPort() });
+						new Object[] { getUri(), datagram.getLength(), datagram.getAddress(), datagram.getPort() });
 			}
 			socket.send(datagram);
 		}
@@ -371,6 +379,7 @@ public class UDPConnector implements Connector {
 
 	@Override
 	public URI getUri() {
-		return URI.create(String.format("%s://%s:%d", SUPPORTED_SCHEME, getAddress().getHostString(), getAddress().getPort()));
+		return URI.create(
+				String.format("%s://%s:%d", SUPPORTED_SCHEME, getAddress().getHostString(), getAddress().getPort()));
 	}
 }
