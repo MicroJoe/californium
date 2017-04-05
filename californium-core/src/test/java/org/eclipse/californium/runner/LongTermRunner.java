@@ -35,6 +35,8 @@ public class LongTermRunner extends BlockJUnit4ClassRunner {
 
 	public static final Logger LOGGER = Logger.getLogger(LongTermRunner.class.getName());
 
+	private static final int MEGA_BYTE = 1024 * 1024;
+
 	/**
 	 * Default maximum number of repeats.
 	 * 
@@ -85,7 +87,11 @@ public class LongTermRunner extends BlockJUnit4ClassRunner {
 
 		});
 		for (int loop = 1; 0 == maxiumRepeates || loop <= maxiumRepeates; ++loop) {
+			Runtime runtime = Runtime.getRuntime();
 			LOGGER.log(Level.INFO, "loop: {0}", loop);
+			LOGGER.log(Level.INFO, "mem: free {0} MByte, total {1} MByte, max {2} MByte",
+					new Object[] { runtime.freeMemory() / MEGA_BYTE, runtime.totalMemory() / MEGA_BYTE,
+							runtime.maxMemory() / MEGA_BYTE });
 			super.run(notifier);
 			if (0 < failed.get()) {
 				break;
