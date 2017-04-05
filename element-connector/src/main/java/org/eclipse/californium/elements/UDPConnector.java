@@ -208,10 +208,6 @@ public class UDPConnector implements Connector {
 		if (msg == null) {
 			throw new NullPointerException("Message must not be null");
 		} else {
-			if (LOGGER.isLoggable(Level.FINER)) {
-				LOGGER.log(Level.FINER, "UDPConnector ({0}) schedule sends {1} bytes to {2}:{3}",
-						new Object[] { getUri(), msg.getSize(), msg.getAddress(), msg.getPort() });
-			}
 			outgoing.add(msg);
 		}
 	}
@@ -329,6 +325,10 @@ public class UDPConnector implements Connector {
 						new Object[] { getUri(), datagram.getLength(), datagram.getAddress(), datagram.getPort() });
 			}
 			socket.send(datagram);
+			if (LOGGER.isLoggable(Level.FINER)) {
+				LOGGER.log(Level.FINER, "UDPConnector ({0}) sent {1} bytes to {2}:{3}",
+						new Object[] { getUri(), datagram.getLength(), datagram.getAddress(), datagram.getPort() });
+			}
 		}
 	}
 
